@@ -70,6 +70,7 @@ def about():
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
+    
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
@@ -96,11 +97,15 @@ def login():
             else:
                 flash('Your account has been deactivated. Please contact an administrator.')
             return redirect(url_for('login'))
-            
-        login_user(user)
         
+        # 🔐 Regenerate session ID for security
+        session.clear()
+        login_user(user)  # Flask-Login will now issue a fresh session cookie
+
+        # Optional: Store user_id if you manually use it elsewhere
+        session['user_id'] = user.id
+
         next_page = request.args.get('next')
-        # Prevent open redirects by validating next_page URL
         if not next_page or urlparse(next_page).netloc != '':
             next_page = url_for('index')
         return redirect(next_page)

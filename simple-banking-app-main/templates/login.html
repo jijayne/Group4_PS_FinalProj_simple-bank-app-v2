@@ -1,39 +1,72 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-6 offset-md-3">
-        <div class="card">
-            <div class="card-header">
-                <h4>Sign In</h4>
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <!-- Card with softer pink accents -->
+        <div class="card border-0 shadow-sm" style="border-radius: 15px;">
+            <!-- Pink header with subtle gradient -->
+            <div class="card-header border-0 py-4" style="background: linear-gradient(135deg, #ffb6c1, #ff69b4);">
+                <h4 class="text-white text-center mb-0">Welcome Back! 💖</h4>
             </div>
-            <div class="card-body">
+            
+            <div class="card-body px-4 py-4">
                 <form method="post" novalidate>
-                    {{ form.hidden_tag() }}
+                    {{ form.csrf_token }}
+                    
+                    <!-- Username Field -->
                     <div class="mb-3">
-                        {{ form.username.label(class="form-label") }}
-                        {{ form.username(class="form-control") }}
+                        {{ form.username.label(class="form-label text-muted") }}
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0">
+                                <i class="bi bi-person-fill text-pink"></i>
+                            </span>
+                            {{ form.username(class="form-control border-start-0", placeholder="Your username") }}
+                        </div>
                         {% for error in form.username.errors %}
-                        <div class="text-danger">{{ error }}</div>
+                        <div class="text-danger small mt-1">{{ error }}</div>
                         {% endfor %}
                     </div>
+                    
+                    <!-- Password Field -->
                     <div class="mb-3">
-                        {{ form.password.label(class="form-label") }}
-                        {{ form.password(class="form-control") }}
+                        {{ form.password.label(class="form-label text-muted") }}
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0">
+                                <i class="bi bi-lock-fill text-pink"></i>
+                            </span>
+                            {{ form.password(class="form-control border-start-0", placeholder="••••••••") }}
+                        </div>
                         {% for error in form.password.errors %}
-                        <div class="text-danger">{{ error }}</div>
+                        <div class="text-danger small mt-1">{{ error }}</div>
                         {% endfor %}
                     </div>
+                    
+                    <!-- Remember Me Checkbox (Optional) -->
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="rememberMe">
+                        <label class="form-check-label text-muted" for="rememberMe">Remember me</label>
+                    </div>
+                    
+                    <!-- Submit Button (Pink!) -->
                     <div class="d-grid gap-2">
-                        {{ form.submit(class="btn btn-primary") }}
+                        <button type="submit" class="btn btn-pink py-2" style="background: #ff69b4; color: white; border: none; border-radius: 10px;">
+                            Sign In <i class="bi bi-arrow-right-short"></i>
+                        </button>
                     </div>
                 </form>
-                <div class="mt-3 text-center">
-                    <p>New to SimpleBankApp? <a href="{{ url_for('register') }}">Register here</a></p>
-                    <p><a href="{{ url_for('reset_password_request') }}">Forgot your password?</a></p>
+                
+                <!-- Footer Links -->
+                <div class="mt-4 text-center">
+                    <p class="text-muted small mb-2">New to SimpleBankApp? 
+                        <a href="{{ url_for('register') }}" class="text-pink" style="color: #ff69b4;">Register here</a>
+                    </p>
+                    <p class="small">
+                        <a href="{{ url_for('reset_password_request') }}" class="text-muted">Forgot password?</a>
+                    </p>
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}

@@ -7,7 +7,10 @@ from dotenv import load_dotenv
 from itsdangerous import URLSafeTimedSerializer
 import secrets
 from flask_wtf.csrf import CSRFProtect
+from flask_talisman import Talisman
 from flask_limiter.errors import RateLimitExceeded
+
+
 
 # Import extensions
 from extensions import db, login_manager, bcrypt, limiter
@@ -23,8 +26,21 @@ def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or secrets.token_hex(16)
 
-    # CSRF Protection
+    # ✅ Session security settings
+    app.config.update(
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SECURE=True,  # Ensure you're using HTTPS in production
+        SESSION_REFRESH_EACH_REQUEST=True
+    )
+
+    # ✅ CSRF Protection
     csrf.init_app(app)
+
+    # ✅ Flask-Talisman for security headers
+    Talisman(app, content_security_policy={
+        'default-src': "'self'",
+        'script-src': ["'self'", "cdnjs.cloudflare.com"]
+    })
 
     # Database configuration - Using SQLite
     basedir = os.path.abspath(os.path.dirname(__file__))
@@ -36,7 +52,7 @@ def create_app():
     login_manager.init_app(app)
     bcrypt.init_app(app)
     limiter.init_app(app)
-    
+
     # Register custom error handler for rate limiting
     @app.errorhandler(RateLimitExceeded)
     def handle_rate_limit_exceeded(e):
@@ -45,6 +61,18 @@ def create_app():
         return render_template('rate_limit_error.html', message=str(e)), 429
 
     return app
+
+def generate_reset_token(email):
+    s = URLSafeTimedSerializer(app.secret_key)
+    return s.dumps(email, salt='password-reset')
+
+def verify_reset_token(token, max_age=1800):  # 30 minutes
+    s = URLSafeTimedSerializer(app.secret_key)
+    try:
+        email = s.loads(token, salt='password-reset', max_age=max_age)
+    except Exception:
+        return None
+    return email
 
 # Create Flask app
 app = create_app()
