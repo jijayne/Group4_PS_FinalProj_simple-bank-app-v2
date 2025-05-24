@@ -92,7 +92,7 @@ To address the above findings, we made the following changes:
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/your-username/secure-flask-banking-app.git
+git clone https://github.com/jijayne/Group4_PS_FinalProj_simple-bank-app-v2.git
 cd secure-flask-banking-app
 ```
 
