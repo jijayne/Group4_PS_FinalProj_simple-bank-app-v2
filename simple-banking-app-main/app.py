@@ -10,8 +10,6 @@ from flask_wtf.csrf import CSRFProtect
 from flask_talisman import Talisman
 from flask_limiter.errors import RateLimitExceeded
 
-
-
 # Import extensions
 from extensions import db, login_manager, bcrypt, limiter
 
@@ -21,7 +19,90 @@ load_dotenv()
 # Initialize CSRF protection
 csrf = CSRFProtect()
 
-# Create Flask application
+# ✅ ROUTES BINDING FUNCTION
+def register_routes(app):
+    @app.route('/')
+    def index():
+        return render_template('index.html')
+
+    @app.route('/about')
+    def about():
+        return render_template('about.html')
+
+    @app.route('/login')
+    def login():
+        return render_template('login.html')
+
+    @app.route('/register')
+    def register():
+        return render_template('register.html')
+
+    @app.route('/account')
+    def account():
+        return render_template('account.html')
+
+    @app.route('/transfer')
+    def transfer():
+        return render_template('transfer.html')
+
+    @app.route('/confirm-transfer')
+    def confirm_transfer():
+        return render_template('confirm_transfer.html')
+
+    @app.route('/reset-password-request')
+    def reset_password_request():
+        return render_template('reset_password_request.html')  # Fix typo here
+
+    @app.route('/reset-password')
+    def reset_password():
+        return render_template('reset_password.html')
+
+    @app.route('/rate-limit-error')
+    def rate_limit_error():
+        return render_template('rate_limit_error.html')
+
+    # Admin folder templates
+    @app.route('/admin/create-account')
+    def admin_create_account():
+        return render_template('admin/create_account.html')
+
+    @app.route('/admin/dashboard')
+    def admin_dashboard():
+        return render_template('admin/dashboard.html')
+
+    @app.route('/admin/deposit')
+    def admin_deposit():
+        return render_template('admin/deposit.html')
+
+    @app.route('/admin/edit-user')
+    def admin_edit_user():
+        return render_template('admin/edit_user.html')
+
+    # Manager folder templates
+    @app.route('/manager/admin-list')
+    def manager_admin_list():
+        return render_template('manager/admin_list.html')
+
+    @app.route('/manager/admin-transactions')
+    def manager_admin_transactions():
+        return render_template('manager/admin_transactions.html')
+
+    @app.route('/manager/create-admin')
+    def manager_create_admin():
+        return render_template('manager/create_admin.html')
+
+    @app.route('/manager/dashboard')
+    def manager_dashboard():
+        return render_template('manager/dashboard.html')
+
+    @app.route('/manager/transfers')
+    def manager_transfers():
+        return render_template('manager/transfers.html')
+
+    @app.route('/manager/user-list')
+    def manager_user_list():
+        return render_template('manager/user_list.html')
+
 def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or secrets.token_hex(16)
@@ -29,7 +110,7 @@ def create_app():
     # ✅ Session security settings
     app.config.update(
         SESSION_COOKIE_HTTPONLY=True,
-        SESSION_COOKIE_SECURE=True,  # Ensure you're using HTTPS in production
+        SESSION_COOKIE_SECURE=True,
         SESSION_REFRESH_EACH_REQUEST=True
     )
 
@@ -53,62 +134,46 @@ def create_app():
     bcrypt.init_app(app)
     limiter.init_app(app)
 
-    # Register custom error handler for rate limiting
+    # Register HTML routes
+    register_routes(app)
+
+    # Rate limit error handler
     @app.errorhandler(RateLimitExceeded)
     def handle_rate_limit_exceeded(e):
         if request.path.startswith('/api/') or request.headers.get('Accept') == 'application/json':
             return jsonify({"error": "Rate limit exceeded", "message": str(e)}), 429
         return render_template('rate_limit_error.html', message=str(e)), 429
 
+    # Token generator using app's secret key
+    def generate_reset_token(email):
+        s = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+        return s.dumps(email, salt='password-reset')
+
+    def verify_reset_token(token, max_age=1800):
+        s = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+        try:
+            email = s.loads(token, salt='password-reset', max_age=max_age)
+        except Exception:
+            return None
+        return email
+
+    # Attach these to app for later usage if needed
+    app.generate_reset_token = generate_reset_token
+    app.verify_reset_token = verify_reset_token
+
     return app
 
-def generate_reset_token(email):
-    s = URLSafeTimedSerializer(app.secret_key)
-    return s.dumps(email, salt='password-reset')
-
-def verify_reset_token(token, max_age=1800):  # 30 minutes
-    s = URLSafeTimedSerializer(app.secret_key)
-    try:
-        email = s.loads(token, salt='password-reset', max_age=max_age)
-    except Exception:
-        return None
-    return email
-
-# Create Flask app
+# Create Flask app instance
 app = create_app()
 
-# Import models - must be after db initialization
+# Import models after app creation
 from models import User, Transaction
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# Import routes after app creation
-from routes import *
-
-# Database initialization function
+# Database initialization
 def init_db():
-    """Initialize the database with required tables and default admin user."""
     with app.app_context():
-        db.create_all()
-        # Check if there are admin users, if not create one
-        admin = User.query.filter_by(is_admin=True).first()
-        if not admin:
-            admin_user = User(
-                username="admin",
-                email="admin@bankapp.com",
-                account_number="0000000001",
-                status="active",
-                is_admin=True,
-                balance=0.0
-            )
-            admin_user.set_password("admin123")
-            db.session.add(admin_user)
-            db.session.commit()
-            print("Created admin user with username 'admin' and password 'admin123'")
-
-if __name__ == '__main__':
-    # Initialize the database
-    init_db()
-    app.run(debug=True)
+        db.create
