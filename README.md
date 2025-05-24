@@ -1,81 +1,128 @@
-# Group4_PS_FinalProj
+# Secure Flask Banking Application
 
-🧪 Tool: pip-audit
-🔍 Purpose: To detect known security issues in third-party Python packages
-📊 Findings:
-- [example] Flask 2.0.1 has known vulnerabilities (CVE-XXXX-XXXX)
-- [example] SQLAlchemy 1.3.0 is outdated — recommend updating to 1.4.0 or later
-
-✅ Remediation Plan:
-- Run `pip install --upgrade [package-name]` to fix
-- Updated Flask and SQLAlchemy to secure versions
+## 👥 Group Members
+- [Jane Cagorong]
+- [Justine Son Camila]
+- [Mark Angelo Umacam]
 
 
-🧪 Tool: Burp Suite Community Edition
-🔍 Purpose: Intercept and analyze HTTP requests and responses
-📊 Findings:
-- No CSRF token detected on transfer form
-- Admin page was accessible without proper role
-- Input validation for `<script>` not sanitized
+## 📘 Introduction
 
-✅ Remediation Plan:
-- Enforce CSRF protection using Flask-WTF
-- Restrict access using Flask-Login decorators
-- Sanitize inputs on both client and server sides
+This project is a secure online banking system built with Flask. It includes features for users, administrators, and managers to manage accounts, perform transfers, and track transactions. The original application was assessed for vulnerabilities and has been enhanced based on penetration testing results to improve overall security.
+
+## 🎯 Objectives
+
+- Identify and assess security vulnerabilities in the original banking application.
+- Implement security best practices to harden the application.
+- Perform penetration testing to validate security improvements.
+- Deploy a secure version of the application online.
+
+## ✨ Original Application Features
+
+- User registration and login
+- Role-based dashboards (User, Admin, Manager)
+- Account management and transfers
+- Admin creation and deposit functionalities
+- Manager control over users and admins
+- Reset password mechanism
+
+## 🚨 Security Assessment Findings
+
+During the initial assessment, the following vulnerabilities were discovered:
+
+- **Lack of CSRF Protection** on sensitive forms.
+- **No rate limiting** on login and sensitive routes.
+- **Missing content security policies**, leaving the app open to XSS.
+- **Improper session configurations**, risking session hijacking.
+- **No input validation/sanitization**, allowing possible injection attacks.
+- **Weak password storage mechanism** or missing hashing in earlier versions.
+
+## 🔐 Security Improvements Implemented
+
+To address the above findings, we made the following changes:
+
+- ✅ Implemented **CSRF protection** via `Flask-WTF`.
+- ✅ Enforced **HTTP security headers** using `Flask-Talisman`.
+- ✅ Configured **secure session cookies** (`SESSION_COOKIE_SECURE`, `HTTPONLY`).
+- ✅ Added **rate limiting** using `Flask-Limiter`.
+- ✅ Enforced **strong password hashing** using `bcrypt`.
+- ✅ Added **input sanitization and form validation**.
+- ✅ Utilized `itsdangerous` for secure reset token generation.
+
+## 🧪 Penetration Testing Report
+
+### Identified Vulnerabilities:
+- CSRF on transaction and login forms
+- Login brute-force vulnerability
+- XSS risk in input fields
+- Insecure password reset token handling
+
+### Exploitation Steps:
+1. Replayed POST request to `/transfer` without CSRF token.
+2. Performed brute-force attack on `/login` without any lockout.
+3. Injected scripts into unescaped fields in templates.
+4. Accessed reset password endpoint with manipulated tokens.
+
+### Recommendations:
+- Enforce CSRF tokens on all POST requests
+- Implement rate limiting and brute-force protection
+- Escape user input in all templates
+- Use time-limited, signed tokens for password reset
+
+## 🛠 Remediation Plan
+
+- Integrated CSRF middleware and tokens for all sensitive forms
+- Configured `Flask-Limiter` with thresholds on login and reset
+- Used Jinja2 auto-escaping and manually escaped where necessary
+- Used `URLSafeTimedSerializer` for secure, time-limited reset tokens
+- Enforced HTTPS-only cookies and session security best practices
+
+## 🧰 Technology Stack
+
+| Component       | Technology          |
+|----------------|---------------------|
+| Backend         | Flask               |
+| Frontend        | Jinja2, HTML/CSS    |
+| Database        | SQLite              |
+| Extensions      | Flask-WTF, Flask-Login, Flask-Bcrypt, Flask-Limiter, Flask-Talisman |
+| Deployment      | PythonAnywhere      |
+| Language        | Python              |
+
+## 🚀 Setup Instructions
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/your-username/secure-flask-banking-app.git
+cd secure-flask-banking-app
+```
+
+### 2. Create a virtual environment
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows use venv\Scripts\activate
+```
+
+### 3. Install dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Set environment variables
+Create a `.env` file in the project root:
+
+```
+SECRET_KEY=your_secure_secret_key
+```
+
+### 5. Run the app locally
+```bash
+python app.py
+```
+
+Visit: `http://127.0.0.1:5000`
 
 
-[3]
-We used Nmap to scan our local system (127.0.0.1) while the Flask banking app was running. The following results were obtained:
+## 🌐 Live Web Application
 
-Test	Result
-Nmap Basic Scan	Open ports found: 135, 445, 3306, 5000, 8080, 8090
-Detected Services	- Port 135: Microsoft RPC
-- Port 445: Windows SMB
-- Port 3306: MySQL 8.0.40
-- Port 5000: Werkzeug HTTP Server 3.1.3
-- Port 8080: Burp Suite Community Proxy
-- Port 8090: Unidentified (tcpwrapped)
-Vulnerabilities Detected	✅ Slowloris DoS attack (CVE-2007-6750)
-✅ phpMyAdmin Local File Inclusion (CVE-2005-3299) (status: unknown)
-✅ Litespeed Source Code Disclosure (CVE-2010-2333)
-Risks/Findings	- Port 3306 (MySQL) should not be publicly accessible.
-- Flask development server should not be exposed in production.
-- Web server may be vulnerable to Slowloris attacks.
-- phpMyAdmin and Litespeed-related issues found.
-Recommendations	- Use a WSGI server like Gunicorn or uWSGI for deployment.
-- Firewall the database port (3306) in production.
-- Disable unused ports (like 8090) if not required.
-- Investigate and mitigate CVE vulnerabilities found.
-Screenshot Proof	
-(You need to save and include your screenshot here)
-
-
-
-## 🔐 Step 3: Security Gap Analysis and Recommendations
-
-Based on our vulnerability testing using Burp Suite, Nmap, and static code analysis, we identified the following issues in our banking app and made recommendations for each:
-
-| Area                         | Finding / Risk                                                                 | Recommendation                                                                 |
-|------------------------------|---------------------------------------------------------------------------------|----------------------------------------------------------------------------------|
-| 🔒 Secure Data Storage       | Passwords were not using strong hash algorithms.                               | Use **bcrypt** with salting for password storage.                              |
-| 🧼 Input Validation          | Some input fields accepted `<script>` and SQL characters.                      | Sanitize and validate all inputs server-side. Use **Flask-WTF** and parameterized queries. |
-| 👤 Auth & Authorization      | Users could access `/admin` without role checks.                              | Implement **role-based access control (RBAC)**.                                |
-| 🧁 Session Management        | Session cookie not marked `HttpOnly` or `Secure`.                             | Use `session.cookie_httponly = True` and `session.cookie_secure = True`.       |
-| 🛡️ CSRF Protection           | Some POST forms were missing CSRF tokens.                                     | Add CSRF protection using **Flask-WTF**.                                       |
-| ❌ Error Handling            | Error messages revealed stack traces and app info.                            | Show generic error pages and log details in the backend only.                  |
-| 💻 Output Encoding           | User inputs were rendered unescaped in HTML.                                  | Use Jinja’s autoescaping or manually escape user data in templates.            |
-| 📦 Dependency Management     | `Werkzeug` is in development mode; outdated MySQL version detected.           | Update packages using `pip-audit` or `pip list --outdated`.                    |
-| 🔄 Rate Limiting             | No brute-force protection on login detected.                                  | Use `Flask-Limiter` to rate-limit login attempts.                              |
-| 🔐 Secure Communication      | The app runs over HTTP (port 5000), not HTTPS.                                | Use **SSL/TLS** via reverse proxy (e.g., Nginx or Gunicorn + HTTPS cert).      |
-
-
-## ✅ Step 4: Security Fixes Done
-
-- [x] CSRF protection added with Flask-WTF
-- [x] Session cookies made secure and HttpOnly
-- [x] Security headers added using Flask-Talisman
-- [x] Password reset tokens expire after 30 minutes
-- [x] Regenerate session ID after login
-- [x] Added logging for failed login attempts
-- [x] All forms now include CSRF tokens
-- [x] Manual regression testing completed
+Access the deployed secure banking system here:  
+➡️ 
